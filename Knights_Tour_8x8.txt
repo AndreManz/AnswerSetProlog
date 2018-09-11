@@ -1,0 +1,89 @@
+
+step(0..80).
+xpos(0..7).
+ypos(0..7).
+
+%move(X,Y) causes -on(X1,Y1) if on(X1,Y1)
+-holds(position(X1,Y1),T+1) :- holds(position(X,Y),T+1),holds(position(X1,Y1),T), xpos(X), ypos(Y), xpos(X1), ypos(Y1), step(T), X!=X1, Y!=Y1.
+
+fluent(position(X,Y)):- xpos(X),ypos(Y).
+fluent(marked(X,Y)):- xpos(X),ypos(Y).
+
+action(move(left,up)).
+action(move(left,down)).
+action(move(right,up)).
+action(move(right,down)).
+action(move(down,left)).
+action(move(down,right)).
+action(move(up,left)).
+action(move(up,right)).
+
+%Inertial Axioms
+holds(F,T+1) :- holds(F,T), not -holds(F,T+1), fluent(F), step(T), step(T+1).
+-holds(F,T+1) :- -holds(F,T), not holds(F,T+1), fluent(F), step(T), step(T+1).
+
+
+% Can't return to any place
+ :- holds(position(X,Y),T1),holds(position(X,Y),T2),T1<T2,step(T1),step(T2),xpos(X),ypos(Y),not goal(T2).
+ 
+ %Can't be in two positions at the same step
+% :- holds(position(X,Y),T),holds(position(X2,Y2),T),xpos(X),xpos(X2),ypos(Y),ypos(Y2),X!=X2,Y!=Y2.
+
+%ValidMoves
+holds(position(X-1,Y+2),T+1):- occurs(move(up,left),T),holds(position(X,Y),T),xpos(X),ypos(Y),step(T). 
+holds(position(X+1,Y+2),T+1):- occurs(move(up,right),T),holds(position(X,Y),T),xpos(X),ypos(Y),step(T). 
+holds(position(X-1,Y-2),T+1):- occurs(move(down,left),T),holds(position(X,Y),T),xpos(X),ypos(Y),step(T). 
+holds(position(X+1,Y-2),T+1):- occurs(move(down,right),T),holds(position(X,Y),T),xpos(X),ypos(Y),step(T). 
+holds(position(X-2,Y+1),T+1):- occurs(move(left,up),T),holds(position(X,Y),T),xpos(X),ypos(Y),step(T). 
+holds(position(X-2,Y-1),T+1):- occurs(move(left,down),T),holds(position(X,Y),T),xpos(X),ypos(Y),step(T). 
+holds(position(X+2,Y+1),T+1):- occurs(move(right,up),T),holds(position(X,Y),T),xpos(X),ypos(Y),step(T). 
+holds(position(X+2,Y-1),T+1):- occurs(move(right,down),T),holds(position(X,Y),T),xpos(X),ypos(Y),step(T). 
+
+:- occurs(move(up,left),T), holds(position(X,Y),T),X=0,xpos(X),ypos(Y).
+:- occurs(move(up,right),T),holds(position(X,Y),T),X=7,xpos(X),ypos(Y).
+:- occurs(move(down,left),T),holds(position(X,Y),T),X=0,xpos(X),ypos(Y).
+:- occurs(move(down,right),T),holds(position(X,Y),T),X=7,xpos(X),ypos(Y).
+:- occurs(move(left,up),T),holds(position(X,Y),T),X<2,xpos(X),ypos(Y).
+:- occurs(move(left,down),T),holds(position(X,Y),T),X<2,xpos(X),ypos(Y).
+:- occurs(move(right,up),T),holds(position(X,Y),T),X>5,xpos(X),ypos(Y).
+:- occurs(move(right,down),T),holds(position(X,Y),T),X>5,xpos(X),ypos(Y).
+
+:- occurs(move(up,left),T), holds(position(X,Y),T),Y>5,xpos(X),ypos(Y).
+:- occurs(move(up,right),T),holds(position(X,Y),T),Y>5,xpos(X),ypos(Y).
+:- occurs(move(down,left),T),holds(position(X,Y),T),Y<2,xpos(X),ypos(Y).
+:- occurs(move(down,right),T),holds(position(X,Y),T),Y<2,xpos(X),ypos(Y).
+:- occurs(move(left,up),T),holds(position(X,Y),T),Y=7,xpos(X),ypos(Y).
+:- occurs(move(left,down),T),holds(position(X,Y),T),Y=0,xpos(X),ypos(Y).
+:- occurs(move(right,up),T),holds(position(X,Y),T),Y=7,xpos(X),ypos(Y).
+:- occurs(move(right,down),T),holds(position(X,Y),T),Y=0,xpos(X),ypos(Y).
+
+
+
+%Track moves to ensure no repeat moves.
+holds(marked(X,Y),T):- holds(position(X,Y),T), xpos(X),ypos(Y),step(T).
+holds(marked(X,Y),T+1):-holds(position(X,Y),T), xpos(X),ypos(Y),step(T).
+
+
+%At every step, make a move
+1{occurs(A,T):action(A)}1 :- not goal(T), step(T).
+
+
+%Cannot reach the goal while there is still a valid move
+exists_unmarked(T):- -holds(marked(X,Y),T),xpos(X),ypos(Y),step(T).
+goal(T):- not exists_unmarked(T),step(T).
+goal:-goal(T),step(T).
+:- not goal.
+
+%initial Setup
+holds(marked(0,0),0).
+-holds(marked(X,Y),0):- not holds(marked(X,Y),0),xpos(X),ypos(Y).
+holds(position(0,0),0).
+
+%#show chosenMove/3.
+#show occurs/2.
+%#show holds(marked).
+%#show holds/2.
+%occurs(move(up,right),0).
+
+
+
